@@ -22,7 +22,7 @@ function update()
   file.close()
   if fileContent == updateContent then
     term.setCursorPos(1, screenY)
-  write(currentProgram.." is up to date!")
+	write(currentProgram.." is up to date!")
   else
     term.setCursorPos(1, screenY)
 	write("New update available! Installing now...")
@@ -67,6 +67,7 @@ function receive()
 	  term.setCursorPos(xOld, yOld)
 	  play()
 	end
+	sleep(3)
   end
 end
 
