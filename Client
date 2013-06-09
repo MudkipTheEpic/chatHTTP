@@ -190,11 +190,7 @@ function receive()
 	  term.setCursorPos(xOld, yOld)
 	  play()
 	end
-<<<<<<< HEAD
-	sleep(1)
-=======
 	sleep(3)
->>>>>>> 316557e28b5a9ce4d111e84939f6f7491217ddcf
   end
 end
 
