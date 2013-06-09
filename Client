@@ -80,7 +80,7 @@ function cprint(text)
 end
 postLink = "http://svcc.host-ed.me/post.php"
 getLink = "http://svcc.host-ed.me/get.php?lines=10"
-updateLink = "http://pastebin.com/raw.php?i=927LzxZP"
+updateLink = "https://raw.github.com/MudkipTheEpic/chatHTTP/master/Client"
 currentProgram = shell.getRunningProgram()
 name = nil
 screenX, screenY = term.getSize()
