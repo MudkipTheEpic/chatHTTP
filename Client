@@ -1,10 +1,83 @@
 --[[Changelog: 1.4: Added Notification sound.
 1.5: Added Join/Leave message.
 ]]--
+--Credit Jesusthekiller for color formatting
 
-local split = function(str, pat) local t = {} local fpat = "(.-)"..pat local last_end = 1 local s, e, cap = str:find(fpat, 1) while s do if s ~= 1 or cap ~= "" then table.insert(t,cap) end last_end = e+1 s, e, cap = str:find(fpat, last_end) end if last_end <= #str then cap = str:sub(last_end) table.insert(t, cap) end return t end
+local split = function(str, pat) local t = {} local fpat = "(.-)"..pat local last_end = 1 local s, e, cap = str:find(fpat, 1) if not s then return {str} end while s do if s ~= 1 or cap ~= "" then table.insert(t,cap) end last_end = e+1 s, e, cap = str:find(fpat, last_end) end if last_end <= #str then cap = str:sub(last_end) table.insert(t, cap) end return t end
 
-
+local update,play,clear,receive,send,processCommand,post,updateDisplay
+local cprint,cwrite,toCode,cCode,clear,sb,st,sc
+function sc(x, y)
+    term.setCursorPos(x, y)
+end
+ 
+function clear(move)
+    sb(colors.black)
+    term.clear()
+    if move ~= false then sc(1,1) end
+end
+ 
+function sb(color)
+    term.setBackgroundColor(color)
+end
+ 
+function st(color)
+    term.setTextColor(color)
+end
+ 
+function cCode(h)
+        if term.isColor() and term.isColor then
+                return 2 ^ (tonumber(h, 16) or 0)
+        else
+                if h == "f" then
+                        return colors.black
+                else
+                        return colors.white
+                end
+        end
+end
+ 
+function toCode(n)
+        return string.format('%x', n)
+end
+ 
+function cwrite(text)
+        text = tostring(text)
+       
+        local i = 0
+    while true  do
+                i = i + 1
+                if i > #text then break end
+               
+        local c = text:sub(i, i)
+ 
+                if c == "\\" then
+            if text:sub(i+1, i+1) == "&" then
+                write("&")
+                i = i + 1
+            elseif text:sub(i+1, i+1) == "$" then
+                write("$")
+                i = i + 1
+                        else
+                                write(c)
+            end
+        elseif c == "&" then
+            st(cCode(text:sub(i+1, i+1)))
+            i = i + 1
+        elseif c == "$" then
+            sb(cCode(text:sub(i+1, i+1)))
+            i = i + 1
+        else
+            write(c)
+        end
+    end
+       
+        return
+end
+ 
+function cprint(text)
+        return cwrite(tostring(text).."\n")
+end
 postLink = "http://svcc.host-ed.me/post.php"
 getLink = "http://svcc.host-ed.me/get.php?lines=10"
 updateLink = "http://pastebin.com/raw.php?i=927LzxZP"
@@ -12,8 +85,56 @@ currentProgram = shell.getRunningProgram()
 name = nil
 screenX, screenY = term.getSize()
 screenY = screenY-2
-version = 1.53
+version = 1.54
 
+local function centerWrite(text, ny)
+	if type(text) == "table" then for _, v in pairs(text) do centerPrint(v) end
+	else
+		local x, y = term.getCursorPos()
+		local w, h = term.getSize()
+		term.setCursorPos(w/2 - text:len()/2 + (#text % 2 == 0 and 1 or 0), ny or y)
+		cwrite(text)
+	end
+end
+
+function updateDisplay(txt)
+    term.setCursorPos(1, screenY)	  
+	term.clearLine()
+	centerWrite(txt)
+end
+
+post=function(txt,txt2) txt=txt2 or txt return http.post(postLink,"chat="..txt.."$f&0") end
+
+
+local commandTable={
+	update=function() return update() end;
+	version=function()       
+		return updateDisplay("Version: "..version)
+	end;
+	exit=function() post(name.." left the room.") return error(nil,2) end;
+	me=function(...)
+		local str=table.concat({...}," ")
+		return post("*"..name.." "..str)
+	end;
+	nick=function(newNick)
+		if not newNick or newNick=="" then updateDisplay("Please supply a nickname.") return nil end
+		post(name.." has changed nick to "..newNick)
+		name=newNick
+		return newNick
+	end;
+}
+
+function processCommand(str)
+	if str:sub(1,1)=="/" then
+		local strT=split(str," ")
+		for k,v in pairs(commandTable) do
+			if "/"..k==str then
+				return commandTable[str:sub(1,str:len()-1)]
+			end
+		end
+	end
+	return false
+end
 function update()
   updateContent = http.get(updateLink)
   updateContent = updateContent.readAll()
@@ -58,36 +179,30 @@ function receive()
   while true do
     get = http.get(getLink)
 	get = get.readAll()
+	get = string.gsub(get,"\\(.)","%1")
 	if get ~= getOld then
+
 	  xOld, yOld = term.getCursorPos()
 	  clear(1, screenY)
 	  term.setCursorPos(1,1)
-      print(get)
+      cprint(get)
 	  getOld = get
 	  term.setCursorPos(xOld, yOld)
 	  play()
 	end
+	sleep(1)
   end
 end
 
 function send()
   while true do
     term.setCursorPos(1, screenY+1)
-	write(name..": ")
+	cwrite(name..": ")
     input = read()
-	if input == "/exit" then
-	  --http.post(postLink, "chat="..name.." left the room!")  
-      error()
-	elseif input == "/update" then
-	  update()
-	elseif input == "/me" then
-	  -- For se future, thanks Mudkip
-	elseif input == "/version" then
-      term.setCursorPos(1, screenY)	  
-	  term.clearLine()
-	  write(tostring(version))
+	l=processCommand(input)
+	if l then l(select(2,unpack(split(input," "))))
 	else
-	  http.post(postLink, "chat="..name..": "..input)  
+	  post(name..": "..input)  
 	end
 	
 	clear(screenY+1, screenY+2)
@@ -105,7 +220,7 @@ else
   name = nameInput
 end
 
-http.post(postLink, "chat="..name.." joined the room!")  
+post(name.." joined the room!")  
 clear(screenY+1, screenY+3)
 
 write("/exit to exit, /update to update.")
