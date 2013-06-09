@@ -61,7 +61,7 @@ function cwrite(text)
                         else
                                 write(c)
             end
-        elseif c == "&" then
+        elseif c == "#" then
             st(cCode(text:sub(i+1, i+1)))
             i = i + 1
         elseif c == "$" then
@@ -103,7 +103,7 @@ function updateDisplay(txt)
 	centerWrite(txt)
 end
 
-post=function(txt,txt2) txt=txt2 or txt return http.post(postLink,"chat="..txt.."$f&0") end
+post=function(txt,txt2) txt=txt2 or txt return http.post(postLink,"chat="..txt.."$f#0") end
 
 
 local commandTable={
@@ -128,8 +128,8 @@ function processCommand(str)
 	if str:sub(1,1)=="/" then
 		local strT=split(str," ")
 		for k,v in pairs(commandTable) do
-			if "/"..k==str then
-				return commandTable[str:sub(1,str:len()-1)]
+			if "/"..k==strT[1] then
+				return commandTable[str:sub(2)]
 			end
 		end
 	end
