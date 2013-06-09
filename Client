@@ -111,7 +111,7 @@ local commandTable={
 	version=function()       
 		return updateDisplay("Version: "..version)
 	end;
-	exit=function() post(name.." left the room.") return error(nil,2) end;
+	exit=function() post(name.."#0$f left the room.") return error(nil,2) end;
 	me=function(...)
 		local str=table.concat({...}," ")
 		return post("*"..name.." "..str)
@@ -202,7 +202,7 @@ function send()
 	l=processCommand(input)
 	if l then l(select(2,unpack(split(input," "))))
 	else
-	  post(name..": "..input)  
+	  post(name.."#0$f: "..input)  
 	end
 	
 	clear(screenY+1, screenY+2)
@@ -220,11 +220,11 @@ else
   name = nameInput
 end
 
-post(name.." joined the room!")  
+post(name.."#0$f joined the room!")  
 clear(screenY+1, screenY+3)
 
 write("/exit to exit, /update to update.")
 get = http.get(getLink)
 get = get.readAll()
 get = getOld
-parallel.waitForAny(send, receive)
+pcall(parallel.waitForAny,send, receive)
