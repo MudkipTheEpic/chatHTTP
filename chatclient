@@ -1,0 +1,120 @@
+--[[Changelog: 1.4: Added Notification sound.
+1.5: Added Join/Leave message.
+]]--
+
+local split = function(str, pat) local t = {} local fpat = "(.-)"..pat local last_end = 1 local s, e, cap = str:find(fpat, 1) while s do if s ~= 1 or cap ~= "" then table.insert(t,cap) end last_end = e+1 s, e, cap = str:find(fpat, last_end) end if last_end <= #str then cap = str:sub(last_end) table.insert(t, cap) end return t end
+
+
+postLink = "http://svcc.host-ed.me/post.php"
+getLink = "http://svcc.host-ed.me/get.php?lines=10"
+updateLink = "http://pastebin.com/raw.php?i=927LzxZP"
+currentProgram = shell.getRunningProgram()
+name = nil
+screenX, screenY = term.getSize()
+screenY = screenY-2
+version = 1.53
+
+function update()
+  updateContent = http.get(updateLink)
+  updateContent = updateContent.readAll()
+  file = fs.open(currentProgram, "r")
+  fileContent = file.readAll()
+  file.close()
+  if fileContent == updateContent then
+    term.setCursorPos(1, screenY)
+	write(currentProgram.." is up to date!")
+  else
+    term.setCursorPos(1, screenY)
+	write("New update available! Installing now...")
+	sleep(2)
+	file = fs.open(currentProgram, "w")
+	file.write(updateContent)
+	file.close()
+    term.setCursorPos(1, screenY)
+	term.clearLine()
+	write("Done! Restarting "..currentProgram.." now!")
+	sleep(2)
+	shell.run(currentProgram)
+  end
+  
+end
+
+local commandTable={
+update=update;
+exit=function() error(nil,2) end;
+}
+
+function play()
+  redstone.setOutput("back", true)
+  sleep(0.1)
+  redstone.setOutput("back", false)
+end
+
+function clear(fromY, toY)
+  repeat
+    term.setCursorPos(1, fromY)
+	term.clearLine()
+    fromY = fromY+1
+  until fromY >= toY
+end
+
+
+function receive()
+  while true do
+    get = http.get(getLink)
+	get = get.readAll()
+	if get ~= getOld then
+	  xOld, yOld = term.getCursorPos()
+	  clear(1, screenY)
+	  term.setCursorPos(1,1)
+      print(get)
+	  getOld = get
+	  term.setCursorPos(xOld, yOld)
+	  play()
+	end
+  end
+end
+
+function send()
+  while true do
+    term.setCursorPos(1, screenY+1)
+	write(name..": ")
+    input = read()
+	if input == "/exit" then
+	  --http.post(postLink, "chat="..name.." left the room!")  
+      error()
+	elseif input == "/update" then
+	  update()
+	elseif input == "/me" then
+	  -- For se future, thanks Mudkip
+	elseif input == "/version" then
+      term.setCursorPos(1, screenY)	  
+	  term.clearLine()
+	  write(tostring(version))
+	else
+	  http.post(postLink, "chat="..name..": "..input)  
+	end
+	
+	clear(screenY+1, screenY+2)
+  end
+end
+
+
+term.clear()
+term.setCursorPos(1, screenY+1)
+write("Please enter a name: ")
+nameInput = read()
+if nameInput == "" or nameInput == nil then
+  name = "User"..tostring(math.random(1, 99))
+else
+  name = nameInput
+end
+
+http.post(postLink, "chat="..name.." joined the room!")  
+clear(screenY+1, screenY+3)
+
+write("/exit to exit, /update to update.")
+get = http.get(getLink)
+get = get.readAll()
+get = getOld
+parallel.waitForAny(send, receive)
