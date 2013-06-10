@@ -328,7 +328,7 @@ function receive()
     term.setBackgroundColor(colors.black)
     term.setTextColor(colors.white)
 	end
-	sleep(3)
+	sleep(1.25)
   end
 end
 
