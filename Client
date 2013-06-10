@@ -371,4 +371,6 @@ get = http.get(getLink)
 get = get.readAll()
 get = getOld
 pcall(parallel.waitForAny,send, receive)
-if isRestart then return shell.run(currentProgram,name) end
+if isRestart then return shell.run(currentProgram,name) 
+else post(name.."#0$f has left the room. [Terminated]")
+end
