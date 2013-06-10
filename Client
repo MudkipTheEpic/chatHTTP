@@ -294,9 +294,9 @@ end
 --test
 function play()
   redstone.setOutput("back", true)
-  sleep(0.2)
-  redstone.setOutput("back", false)
   sleep(0.1)
+  redstone.setOutput("back", false)
+  sleep(0.3)
   redstone.setOutput("back", true)
   sleep(0.1)
   redstone.setOutput("back",false)
@@ -357,9 +357,10 @@ function send()
   end
 end
 
-if not name then
+
 term.clear()
 term.setCursorPos(1, screenY+1)
+if not name then
 write("Please enter a name: ")
 nameInput = colorRead()
 if nameInput == "" or nameInput == nil then
