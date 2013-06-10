@@ -166,8 +166,10 @@ function play()
   redstone.setOutput("back", false)
 end
 
-function clear(fromY, toY)
+function clearY(fromY, toY)
   repeat
+  	term.setBackgroundColor(colors.black)
+  	term.setTextColor(colors.white)
     term.setCursorPos(1, fromY)
 	term.clearLine()
     fromY = fromY+1
@@ -183,7 +185,7 @@ function receive()
 	if get ~= getOld then
 
 	  xOld, yOld = term.getCursorPos()
-	  clear(1, screenY)
+	  clearY(1, screenY)
 	  term.setCursorPos(1,1)
       cprint(get)
 	  getOld = get
