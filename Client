@@ -210,10 +210,10 @@ postLink = "http://svcc.host-ed.me/post.php"
 getLink = "http://svcc.host-ed.me/get.php?lines=10"
 updateLink = "https://raw.github.com/MudkipTheEpic/chatHTTP/master/Client"
 currentProgram = shell.getRunningProgram()
-name = nil
+name = ...
 screenX, screenY = term.getSize()
 screenY = screenY-2
-version = 1.54
+version = "2.0"
 
 local function centerWrite(text, ny)
 	if type(text) == "table" then for _, v in pairs(text) do centerPrint(v) end
@@ -239,7 +239,7 @@ local commandTable={
 	version=function()       
 		return updateDisplay("Version: "..version)
 	end;
-	exit=function() post(name.."#0$f left the room.") return error(nil,2) end;
+	exit=function(...) local l if #{...}>0 then l=" ["..table.concat({...}," ").."]" else l="" end post(name.."#0$f left the room."..l) return error(nil,3) end;
 	me=function(...)
 		local str=table.concat({...}," ")
 		return post("*"..name.." "..str)
@@ -286,7 +286,7 @@ function update()
 	write("Done! Restarting "..currentProgram.." now!")
 	sleep(2)
   isRestart=true
-  error(nil,3)
+  commandTable["exit"]("Updating client...")
   end
   
 end
@@ -348,15 +348,16 @@ function send()
   end
 end
 
-
+if not name then
 term.clear()
 term.setCursorPos(1, screenY+1)
 write("Please enter a name: ")
-nameInput = read()
+nameInput = colorRead()
 if nameInput == "" or nameInput == nil then
   name = "User"..tostring(math.random(1, 99)
 )else
   name = nameInput
+end
 end
 
 post(name.."#0$f joined the room!")  
@@ -367,4 +368,4 @@ get = http.get(getLink)
 get = get.readAll()
 get = getOld
 pcall(parallel.waitForAny,send, receive)
-if isRestart then return shell.run(currentProgram) end
+if isRestart then return shell.run(currentProgram,name) end
