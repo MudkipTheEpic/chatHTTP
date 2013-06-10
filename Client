@@ -132,6 +132,7 @@ function processCommand(str)
 				return commandTable[strT[1]:sub(2)]
 			end
 		end
+    return 4
 	end
 	return false
 end
@@ -191,6 +192,8 @@ function receive()
 	  getOld = get
 	  term.setCursorPos(xOld, yOld)
 	  play()
+    term.setBackgroundColor(colors.black)
+    term.setTextColor(colors.white)
 	end
 	sleep(3)
   end
@@ -199,15 +202,18 @@ end
 function send()
   while true do
     term.setCursorPos(1, screenY+1)
-	cwrite(name..": ")
+	 cwrite(name..": ")
+    term.setBackgroundColor(colors.black)
+    term.setTextColor(colors.white)
     input = read()
-	l=processCommand(input)
-	if l then l(select(2,unpack(split(input," "))))
-	else
-	  post(name.."#0$f: "..input)  
-	end
+	 l=processCommand(input)
+   if l==4 then updateDisplay("Unknown command.")
+	 elseif l then l(select(2,unpack(split(input," "))))
+	 else
+	   post(name.."#0$f: "..input)  
+	 end
 	
-	clear(screenY+1, screenY+2)
+	 clearY(screenY+1, screenY+2)
   end
 end
 
