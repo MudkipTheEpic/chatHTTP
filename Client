@@ -284,7 +284,8 @@ function update()
 	term.clearLine()
 	write("Done! Restarting "..currentProgram.." now!")
 	sleep(2)
-	shell.run(currentProgram)
+  isRestart=true
+  error(nil,3)
   end
   
 end
@@ -365,3 +366,4 @@ get = http.get(getLink)
 get = get.readAll()
 get = getOld
 pcall(parallel.waitForAny,send, receive)
+if isRestart then return shell.run(currentProgram) end
