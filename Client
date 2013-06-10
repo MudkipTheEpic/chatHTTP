@@ -137,7 +137,7 @@ function colorRead( _sReplaceChar, _tHistory )
         
       elseif param == keys.right then
         -- Right        
-        if nPos < string.len(trimColor(sLine)) then
+        if nPos < #sLine then
           nPos = nPos + 1
           redraw()
         end
