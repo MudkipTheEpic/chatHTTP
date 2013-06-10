@@ -215,7 +215,7 @@ currentProgram = shell.getRunningProgram()
 name = ...
 screenX, screenY = term.getSize()
 screenY = screenY-2
-version = "2.01"
+version = "2.02"
 
 local function centerWrite(text, ny)
 	if type(text) == "table" then for _, v in pairs(text) do centerPrint(v) end
