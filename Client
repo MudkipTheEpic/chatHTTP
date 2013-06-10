@@ -229,7 +229,7 @@ else
 end
 
 post(name.."#0$f joined the room!")  
-clear(screenY+1, screenY+3)
+clearY(screenY+1, screenY+3)
 
 write("/exit to exit, /update to update.")
 get = http.get(getLink)
