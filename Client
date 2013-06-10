@@ -264,6 +264,7 @@ function processCommand(str)
 	end
 	return false
 end
+--cake
 function update()
   updateContent = http.get(updateLink)
   updateContent = updateContent.readAll()
