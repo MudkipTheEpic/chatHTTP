@@ -244,11 +244,11 @@ local commandTable={
 	exit=function(...) local l if #{...}>0 then l=" ["..table.concat({...}," ").."]" else l="" end post(name.."#0$f left the room."..l) return error(nil,3) end;
 	me=function(...)
 		local str=table.concat({...}," ")
-		return post("*"..name.." "..str)
+		return post("*"..name.."#0$f "..str)
 	end;
 	nick=function(newNick)
 		if not newNick or newNick=="" then updateDisplay("Please supply a nickname.") return nil end
-		post(name.." has changed nick to "..newNick)
+		post(name.."#0$f has changed nick to "..newNick)
 		name=newNick
 		return newNick
 	end;
