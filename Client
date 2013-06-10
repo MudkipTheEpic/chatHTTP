@@ -5,7 +5,9 @@
 
 local split = function(str, pat) local t = {} local fpat = "(.-)"..pat local last_end = 1 local s, e, cap = str:find(fpat, 1) if not s then return {str} end while s do if s ~= 1 or cap ~= "" then table.insert(t,cap) end last_end = e+1 s, e, cap = str:find(fpat, last_end) end if last_end <= #str then cap = str:sub(last_end) table.insert(t, cap) end return t end
 
-local update,play,clear,receive,send,processCommand,post,updateDisplay
+local history={}
+
+local update,colorRead,play,clear,receive,send,processCommand,post,updateDisplay
 local cprint,cwrite,toCode,cCode,clear,sb,st,sc
 function sc(x, y)
     term.setCursorPos(x, y)
@@ -78,6 +80,126 @@ end
 function cprint(text)
         return cwrite(tostring(text).."\n")
 end
+
+function colorRead( _sReplaceChar, _tHistory )
+  term.setCursorBlink( true )
+
+    local sLine = ""
+  local nHistoryPos = nil
+  local nPos = 0
+    if _sReplaceChar then
+    _sReplaceChar = string.sub( _sReplaceChar, 1, 1 )
+  end
+  
+  local w, h = term.getSize()
+  local sx, sy = term.getCursorPos()  
+  
+  local function redraw( _sCustomReplaceChar )
+    local nScroll = 0
+    if sx + nPos >= w then
+      nScroll = (sx + nPos) - w
+    end
+      
+    term.setCursorPos( sx, sy )
+    local sReplace = _sCustomReplaceChar or _sReplaceChar
+    if sReplace then
+      cwrite( string.rep(sReplace, string.len(sLine) - nScroll) )
+    else
+      cwrite( string.sub( sLine, nScroll + 1 ) )
+    end
+    term.setCursorPos( sx + nPos - nScroll, sy )
+  end
+  
+  while true do
+    local sEvent, param = os.pullEvent()
+    if sEvent == "char" then
+      sLine = string.sub( sLine, 1, nPos ) .. param .. string.sub( sLine, nPos + 1 )
+      nPos = nPos + 1
+      redraw()
+      
+    elseif sEvent == "key" then
+        if param == keys.enter then
+        -- Enter
+        break
+        
+      elseif param == keys.left then
+        -- Left
+        if nPos > 0 then
+          nPos = nPos - 1
+          redraw()
+        end
+        
+      elseif param == keys.right then
+        -- Right        
+        if nPos < string.len(sLine) then
+          nPos = nPos + 1
+          redraw()
+        end
+      
+      elseif param == keys.up or param == keys.down then
+                -- Up or down
+        if _tHistory then
+          redraw(" ");
+          if param == keys.up then
+            -- Up
+            if nHistoryPos == nil then
+              if #_tHistory > 0 then
+                nHistoryPos = #_tHistory
+              end
+            elseif nHistoryPos > 1 then
+              nHistoryPos = nHistoryPos - 1
+            end
+          else
+            -- Down
+            if nHistoryPos == #_tHistory then
+              nHistoryPos = nil
+            elseif nHistoryPos ~= nil then
+              nHistoryPos = nHistoryPos + 1
+            end           
+          end
+          
+          if nHistoryPos then
+                      sLine = _tHistory[nHistoryPos]
+                      nPos = string.len( sLine ) 
+                    else
+            sLine = ""
+            nPos = 0
+          end
+          redraw()
+                end
+      elseif param == keys.backspace then
+        -- Backspace
+        if nPos > 0 then
+          redraw(" ");
+          sLine = string.sub( sLine, 1, nPos - 1 ) .. string.sub( sLine, nPos + 1 )
+          nPos = nPos - 1         
+          redraw()
+        end
+      elseif param == keys.home then
+        -- Home
+        nPos = 0
+        redraw()    
+      elseif param == keys.delete then
+        if nPos < string.len(sLine) then
+          redraw(" ");
+          sLine = string.sub( sLine, 1, nPos ) .. string.sub( sLine, nPos + 2 )       
+          redraw()
+        end
+      elseif param == keys["end"] then
+        -- End
+        nPos = string.len(sLine)
+        redraw()
+      end
+    end
+  end
+  
+  term.setCursorBlink( false )
+  term.setCursorPos( w + 1, sy )
+  print()
+  
+  return sLine
+end
+
 postLink = "http://svcc.host-ed.me/post.php"
 getLink = "http://svcc.host-ed.me/get.php?lines=10"
 updateLink = "https://raw.github.com/MudkipTheEpic/chatHTTP/master/Client"
@@ -205,7 +327,8 @@ function send()
 	 cwrite(name..": ")
     term.setBackgroundColor(colors.black)
     term.setTextColor(colors.white)
-    input = read()
+    input = colorRead(nil,history)
+    table.insert(history,input)
 	 l=processCommand(input)
    if l==4 then updateDisplay("Unknown command.")
 	 elseif l then l(select(2,unpack(split(input," "))))
@@ -223,8 +346,8 @@ term.setCursorPos(1, screenY+1)
 write("Please enter a name: ")
 nameInput = read()
 if nameInput == "" or nameInput == nil then
-  name = "User"..tostring(math.random(1, 99))
-else
+  name = "User"..tostring(math.random(1, 99)
+)else
   name = nameInput
 end
 
