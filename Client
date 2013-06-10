@@ -370,7 +370,7 @@ write("/exit to exit, /update to update.")
 get = http.get(getLink)
 get = get.readAll()
 get = getOld
-pcall(parallel.waitForAny,send, receive)
+local ok,err=pcall(parallel.waitForAny,send, receive)
 if isRestart then return shell.run(currentProgram,name) 
-else post(name.."#0$f has left the room. [Terminated]")
+elseif err="Terminated" then post(name.."#0$f has left the room. [Terminated]")
 end
