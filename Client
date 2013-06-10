@@ -280,14 +280,13 @@ function update()
   else
     term.setCursorPos(1, screenY)
 	write("New update available! Installing now...")
-	sleep(2)
+	sleep(1)
 	file = fs.open(currentProgram, "w")
 	file.write(updateContent)
 	file.close()
     term.setCursorPos(1, screenY)
 	term.clearLine()
 	write("Done! Restarting "..currentProgram.." now!")
-	sleep(2)
   isRestart=true
   commandTable["exit"]("Updating client...")
   end
