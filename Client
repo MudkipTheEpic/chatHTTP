@@ -215,7 +215,7 @@ currentProgram = shell.getRunningProgram()
 name = ...
 screenX, screenY = term.getSize()
 screenY = screenY-2
-version = "2.0"
+version = "2.01"
 
 local function centerWrite(text, ny)
 	if type(text) == "table" then for _, v in pairs(text) do centerPrint(v) end
@@ -294,8 +294,14 @@ end
 
 function play()
   redstone.setOutput("back", true)
-  sleep(0.1)
+  sleep(0.25)
   redstone.setOutput("back", false)
+  redstone.setOutput("back", true)
+  sleep(0.1)
+  redstone.setOutput("back",false)
+  redstone.setOutput("back",true)
+  sleep(0.1)
+  redstone.setOutput("back",false)
 end
 
 function clearY(fromY, toY)
