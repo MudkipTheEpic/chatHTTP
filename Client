@@ -5,6 +5,12 @@
 
 local split = function(str, pat) local t = {} local fpat = "(.-)"..pat local last_end = 1 local s, e, cap = str:find(fpat, 1) if not s then return {str} end while s do if s ~= 1 or cap ~= "" then table.insert(t,cap) end last_end = e+1 s, e, cap = str:find(fpat, last_end) end if last_end <= #str then cap = str:sub(last_end) table.insert(t, cap) end return t end
 
+local trimColor=function(str)
+  str=string.gsub(str,"%#.","")
+  str=string.gsub(str,"%$.","")
+  return str
+end
+
 local history={}
 
 local update,colorRead,play,clear,receive,send,processCommand,post,updateDisplay
@@ -107,7 +113,7 @@ function colorRead( _sReplaceChar, _tHistory )
     else
       cwrite( string.sub( sLine, nScroll + 1 ) )
     end
-    term.setCursorPos( sx + nPos - nScroll, sy )
+    term.setCursorPos( sx + nPos - (#sLine-#trimColor(sLine)) - nScroll, sy )
   end
   
   while true do
@@ -124,14 +130,14 @@ function colorRead( _sReplaceChar, _tHistory )
         
       elseif param == keys.left then
         -- Left
-        if nPos > 0 then
+        if nPos > #sLine-#trimColor(sLine) then
           nPos = nPos - 1
           redraw()
         end
         
       elseif param == keys.right then
         -- Right        
-        if nPos < string.len(sLine) then
+        if nPos < string.len(trimColor(sLine)) then
           nPos = nPos + 1
           redraw()
         end
