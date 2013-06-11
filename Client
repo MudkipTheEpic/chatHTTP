@@ -256,7 +256,7 @@ local commandTable={
 	server=function(...)
 		local post=function(txt,txt2) txt=txt2 or txt return http.post(postLink,"chat="..txt) end
 		local args = {...}
-		local sendstr = args[1].."&servercmd="..args[2].."&args="..unpack(args, [3])
+		local sendstr = args[1].."&servercmd="..args[2].."&args="..unpack(args, 3)
 		post("server"...t(args))
 	end;
 }
