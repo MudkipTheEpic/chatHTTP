@@ -209,12 +209,8 @@ function colorRead( _sReplaceChar, _tHistory )
 end
 
 local postLink,getLink
-postLink = "http://svcc.host-ed.me/post.php"
-getLink = "http://svcc.host-ed.me/get.php?lines=10"
-if not http.get(getLink) then
 postLink="http://minizbot2012.koding.com/PSchatserv/post.php"
 getLink="http://minizbot2012.koding.com/PSchatserv/get.php"
-end
 updateLink = "https://raw.github.com/MudkipTheEpic/chatHTTP/master/Client"
 currentProgram = shell.getRunningProgram()
 name = ...
