@@ -209,8 +209,8 @@ function colorRead( _sReplaceChar, _tHistory )
 end
 
 local postLink,getLink
-postLink="http://minizbot2012.koding.com/PSchatserv/post.php"
-getLink="http://minizbot2012.koding.com/PSchatserv/get.php"
+postLink="http://minizbot2012.kd.io/PSchatserv/post.php"
+getLink="http://minizbot2012.kd.io/PSchatserv/get.php"
 updateLink = "https://raw.github.com/MudkipTheEpic/chatHTTP/master/Client"
 currentProgram = shell.getRunningProgram()
 name = ...
@@ -257,7 +257,7 @@ local commandTable={
 		local spost=function(txt,txt2) txt=txt2 or txt return http.post(postLink,"chat="..txt) end
 		local args = {...}
 		sendstr = table.concat(args, ":")
-		spost("server;"..sendstr)
+		spost("server;"..name..";"..sendstr)
 		return sendstr
 	end;
 }
