@@ -13,6 +13,34 @@ local trimColor=function(str)
   return str
 end
 
+local function installAPI(code, name)
+        local webHandle = http.get("http://pastebin.com/raw.php?i="..code)
+        if webHandle then
+                local apiData = webHandle.readAll()
+                webHandle.close()
+				local tEnv = {}
+				setmetatable( tEnv, { __index = _G } )
+				local fnAPI, err = loadstring( apiData )
+				if fnAPI then
+					setfenv( fnAPI, tEnv )
+					fnAPI()
+				end
+	
+				local tAPI = {}
+				for k,v in pairs( tEnv ) do
+					tAPI[k] =  v
+				end
+	
+				_G[name] = tAPI	
+        else
+                print("Could not retrieve API: "..name.."!")
+                print("Ensure that the HTTP API is enabled.")
+                return false
+        end
+end
+
+installAPI("ZBLqY11E", "hash")
+
 local history={}
 
 local update,colorRead,play,clear,receive,send,processCommand,post,updateDisplay
@@ -217,7 +245,18 @@ name = ...
 screenX, screenY = term.getSize()
 screenY = screenY-2
 version = "2.02"
-
+data = {}
+if not fs.exists("/.chatData") then
+	fs.makeDir("/.chatData")
+end
+if fs.exists("/.chatData/data") then
+	file = fs.open("/.chatData/data", "r")
+	data.file = file.readAll()
+	password = data.file
+	file.close()
+else
+	password = "guest"
+end
 local function centerWrite(text, ny)
 	if type(text) == "table" then for _, v in pairs(text) do centerPrint(v) end
 	else
@@ -234,7 +273,7 @@ function updateDisplay(txt)
 	centerWrite(txt)
 end
 
-post=function(txt,txt2) txt=txt2 or txt return http.post(postLink,"chat="..txt.."$f#0") end
+post=function(txt,txt2) txt=txt2 or txt return http.post(postLink,"chat="..txt.."$f#0".."&".."password="..hash.sha256(password)) end
 
 
 local commandTable={
