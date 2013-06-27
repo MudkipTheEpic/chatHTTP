@@ -295,7 +295,7 @@ local commandTable={
 	server=function(...)
 		local spost=function(txt,txt2) txt=txt2 or txt return http.post(postLink,"chat="..txt) end
 		local args = {...}
-		sendstr = table.concat(args, ":")
+		sendstr = table.concat(args, ";")
 		spost("server;"..name..";"..password..";"..sendstr)
 		return sendstr
 	end;
