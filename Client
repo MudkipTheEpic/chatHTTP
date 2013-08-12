@@ -13,34 +13,6 @@ local trimColor=function(str)
   return str
 end
 
-local function installAPI(code, name)
-        local webHandle = http.get("http://pastebin.com/raw.php?i="..code)
-        if webHandle then
-                local apiData = webHandle.readAll()
-                webHandle.close()
-				local tEnv = {}
-				setmetatable( tEnv, { __index = _G } )
-				local fnAPI, err = loadstring( apiData )
-				if fnAPI then
-					setfenv( fnAPI, tEnv )
-					fnAPI()
-				end
-	
-				local tAPI = {}
-				for k,v in pairs( tEnv ) do
-					tAPI[k] =  v
-				end
-	
-				_G[name] = tAPI	
-        else
-                print("Could not retrieve API: "..name.."!")
-                print("Ensure that the HTTP API is enabled.")
-                return false
-        end
-end
-
-installAPI("ZBLqY11E", "hash")
-
 local history={}
 
 local update,colorRead,play,clear,receive,send,processCommand,post,updateDisplay
@@ -238,13 +210,13 @@ end
 
 local postLink,getLink
 postLink="http://minizbot2012.kd.io/PSchatserv/post.php"
-getLink="http://minizbot2012.kd.io/PSchatserv/get.php"
+getLink="http://minizbot2012.kd.io/PSchatserv/get.php?name="
 updateLink = "https://raw.github.com/MudkipTheEpic/chatHTTP/master/Client"
 currentProgram = shell.getRunningProgram()
 name = ...
 screenX, screenY = term.getSize()
 screenY = screenY-2
-version = "2.02"
+version = "2.1"
 data = {}
 if not fs.exists("/.chatData") then
 	fs.makeDir("/.chatData")
@@ -273,7 +245,7 @@ function updateDisplay(txt)
 	centerWrite(txt)
 end
 
-post=function(txt,txt2) txt=txt2 or txt return http.post(postLink,"chat="..txt.."$f#0") end
+post=function(txt,txt2) txt=txt2 or txt return http.post(postLink,"chat="..txt.."$f#0", "name="..trimColor(name)) end
 
 
 local commandTable={
@@ -296,9 +268,34 @@ local commandTable={
 		local spost=function(txt,txt2) txt=txt2 or txt return http.post(postLink,"chat="..txt.."&".."password="..password) end
 		local args = {...}
 		sendstr = table.concat(args, ";")
-		return spost("server;"..name..";"..sendstr)
+		return spost("server;"..sendstr)
 	end;
 }
+
+ServCmdTbl = {
+	cnick = function(newNick)
+	if not newNick[3] or newNick[3]=="" then return nil end
+	post(name.."#0$f has been forced to change nick to "..newNick[3])
+	name=newNick[3]
+	end;
+}
+
+function ProcServCmd(str)
+	local data2 = split(str, "\n")
+	str2 = data2[#data2]
+	if str2:sub(1,10) == "servercmd;" then
+		local strT = split(str2, ";")
+		for k,v in pairs(ServCmdTbl) do
+			if "servercmd;"..k == strT[1]..";"..strT[2] then
+				cmd = strT[2]
+				ServCmdTbl[cmd](strT)
+				return false
+			end
+		end
+		return true
+	end
+	return true
+end
 
 function processCommand(str)
 	if str:sub(1,1)=="/" then
@@ -308,7 +305,7 @@ function processCommand(str)
 				return commandTable[strT[1]:sub(2)]
 			end
 		end
-    return 4
+		return 4
 	end
 	return false
 end
@@ -362,21 +359,22 @@ function clearY(fromY, toY)
   until fromY >= toY
 end
 
-
 function receive()
   while true do
-    get = http.get(getLink)
+    get = http.get(getLink..trimColor(name))
 	get = get.readAll()
 	get = string.gsub(get,"\\(.)","%1")
 	if get ~= getOld then
-
-	  xOld, yOld = term.getCursorPos()
-	  clearY(1, screenY)
-	  term.setCursorPos(1,1)
-      cprint(get)
-	  getOld = get
-	  term.setCursorPos(xOld, yOld)
-	  play()
+		dop = ProcServCmd(get)
+		if dop == true then
+			xOld, yOld = term.getCursorPos()
+			clearY(1, screenY)
+			term.setCursorPos(1,1)
+			cprint(get)
+		end
+		getOld = get
+		term.setCursorPos(xOld, yOld)
+		play()
     term.setBackgroundColor(colors.black)
     term.setTextColor(colors.white)
 	end
@@ -410,7 +408,7 @@ if not name then
 write("Please enter a name: ")
 nameInput = colorRead()
 if nameInput == "" or nameInput == nil then
-  name = "User"..tostring(math.random(1, 99)
+  name = "User"..tostring(math.random(1, 999)
 )else
   name = nameInput
 end
