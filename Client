@@ -209,14 +209,14 @@ function colorRead( _sReplaceChar, _tHistory )
 end
 
 local postLink,getLink
-postLink="http://minizbot2012.kd.io/PSchatserv/post.php"
-getLink="http://minizbot2012.kd.io/PSchatserv/get.php?name="
+postLink="http://minizbot2012.kd.io/PSchatnexus/post.php"
+getLink="http://minizbot2012.kd.io/PSchatnexus/get.php?user="
 updateLink = "https://raw.github.com/MudkipTheEpic/chatHTTP/master/Client"
 currentProgram = shell.getRunningProgram()
 name = ...
 screenX, screenY = term.getSize()
 screenY = screenY-2
-version = "2.1"
+version = "2.2"
 data = {}
 if not fs.exists("/.chatData") then
 	fs.makeDir("/.chatData")
@@ -265,7 +265,7 @@ local commandTable={
 		return newNick
 	end;
 	server=function(...)
-		local spost=function(txt,txt2) txt=txt2 or txt return http.post(postLink,"chat="..txt.."&".."password="..password) end
+		local spost=function(txt,txt2) txt=txt2 or txt return http.post(postLink,"chat="..txt.."&".."password="..password.."&user="..trimColor(name)) end
 		local args = {...}
 		sendstr = table.concat(args, ";")
 		return spost("server;"..sendstr)
@@ -277,6 +277,11 @@ ServCmdTbl = {
 	if not newNick[3] or newNick[3]=="" then return nil end
 	post(name.."#0$f has been forced to change nick to "..newNick[3])
 	name=newNick[3]
+	end;
+	mvserv = function(NewServ)
+	postLink=NewServ[3].."/post.php"
+	getLink=NewServ[3].."/get.php?user="
+	post(name.."#0$f has joined this server")
 	end;
 }
 
