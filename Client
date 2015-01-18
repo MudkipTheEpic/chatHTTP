@@ -1,5 +1,6 @@
 --[[Changelog: 1.4: Added Notification sound.
 1.5: Added Join/Leave message.
+3.0 now on App Engine!
 ]]--
 --Credit Jesusthekiller for color formatting
 
@@ -209,14 +210,14 @@ function colorRead( _sReplaceChar, _tHistory )
 end
 
 local postLink,getLink
-postLink="http://minizbot2012.kd.io/PSchatnexus/post.php"
-getLink="http://minizbot2012.kd.io/PSchatnexus/get.php?user="
+postLink="http://http-chat-serv.appspot.com/post"
+getLink="http://http-chat-serv.appspot.com/get"
 updateLink = "https://raw.github.com/MudkipTheEpic/chatHTTP/master/Client"
 currentProgram = shell.getRunningProgram()
 name = ...
 screenX, screenY = term.getSize()
 screenY = screenY-2
-version = "2.2"
+version = "3.0"
 data = {}
 if not fs.exists("/.chatData") then
 	fs.makeDir("/.chatData")
@@ -245,7 +246,7 @@ function updateDisplay(txt)
 	centerWrite(txt)
 end
 
-post=function(txt,txt2) txt=txt2 or txt return http.post(postLink,"chat="..txt.."$f#0", "name="..trimColor(name)) end
+post=function(txt,txt2) txt=txt2 or txt return http.get(postLink,{usr = name, data = txt}) end
 
 
 local commandTable={
@@ -366,7 +367,7 @@ end
 
 function receive()
   while true do
-    get = http.get(getLink..trimColor(name))
+    get = http.get(getLink, {usr= name, slines=10})
 	get = get.readAll()
 	get = string.gsub(get,"\\(.)","%1")
 	if get ~= getOld then
@@ -383,7 +384,7 @@ function receive()
     term.setBackgroundColor(colors.black)
     term.setTextColor(colors.white)
 	end
-	sleep(1.25)
+	sleep(2)
   end
 end
 
@@ -423,7 +424,7 @@ post(name.."#0$f joined the room!")
 clearY(screenY+1, screenY+3)
 
 write("/exit to exit, /update to update.")
-get = http.get(getLink)
+get = http.get(getLink, {usr = name, slines=10})
 get = get.readAll()
 get = getOld
 local ok,err=pcall(parallel.waitForAny,send, receive)
