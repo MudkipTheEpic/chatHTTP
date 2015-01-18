@@ -247,7 +247,7 @@ function updateDisplay(txt)
 end
 
 local post=function(txt,txt2) txt=txt2 or txt return http.get(postLink,{usr = name, data = txt}) end
-local cmdpost=function(txt,txt2) txt=txt2 or txt return http.get(postLink,{cmd=txt}) end
+local cmdpost=function(txt,txt2) txt=txt2 or txt return http.get(postLink,{usr = name, cmd=txt}) end
 
 local commandTable={
 	update=function() return update() end;
@@ -273,17 +273,18 @@ local commandTable={
 		sendstr = table.concat(args, " ")
     return updateDisplay(split(cmdpost(sendstr).readAll(), "\n")[2])
 	end;
+  changeServ=function(...)
+  local args = {...}
+  local sendstr = "mvserv "..table.concat(args, " ")
+  return updateDisplay(split(cmdpost(sendstr).readAll(), "\n")[2])
+  end;
 }
 
 ServCmdTbl = {
-	cnick = function(newNick)
-	if not newNick[3] or newNick[3]=="" then return nil end
-	post(name.."#0$f has been forced to change nick to "..newNick[3])
-	name=newNick[3]
-	end;
 	mvserv = function(NewServ)
-	postLink=NewServ[3].."/post.php"
-	getLink=NewServ[3].."/get.php?user="
+  post(name.."#0$f has left this server")
+	postLink="http://"..NewServ[3]
+	getLink="http://"..NewServ[4]
 	post(name.."#0$f has joined this server")
 	end;
 }
