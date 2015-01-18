@@ -418,7 +418,453 @@ write("Please enter a name: ")
 nameInput = colorRead()
 if nameInput == "" or nameInput == nil then
   name = "User"..tostring(math.random(1, 999)
+)else--[[Changelog: 1.4: Added Notification sound.
+1.5: Added Join/Leave message.
+3.0 now on App Engine!
+]]--
+--Credit Jesusthekiller for color formatting
+
+local split = function(str, pat) local t = {} local fpat = "(.-)"..pat local last_end = 1 local s, e, cap = str:find(fpat, 1) if not s then return {str} end while s do if s ~= 1 or cap ~= "" then table.insert(t,cap) end last_end = e+1 s, e, cap = str:find(fpat, last_end) end if last_end <= #str then cap = str:sub(last_end) table.insert(t, cap) end return t end
+
+isRestart=false
+local channel = "main"
+
+local trimColor=function(str)
+  str=string.gsub(str,"%#.","")
+  str=string.gsub(str,"%$.","")
+  return str
+end
+
+local history={}
+
+local update,colorRead,play,clear,receive,send,processCommand,post,updateDisplay
+local cprint,cwrite,toCode,cCode,clear,sb,st,sc
+function sc(x, y)
+    term.setCursorPos(x, y)
+end
+ 
+function clear(move)
+    sb(colors.black)
+    term.clear()
+    if move ~= false then sc(1,1) end
+end
+ 
+function sb(color)
+    term.setBackgroundColor(color)
+end
+ 
+function st(color)
+    term.setTextColor(color)
+end
+ 
+function cCode(h)
+        if term.isColor() and term.isColor then
+                return 2 ^ (tonumber(h, 16) or 0)
+        else
+                if h == "f" then
+                        return colors.black
+                else
+                        return colors.white
+                end
+        end
+end
+ 
+function toCode(n)
+        return string.format('%x', n)
+end
+ 
+function cwrite(text)
+        text = tostring(text)
+       
+        local i = 0
+    while true  do
+                i = i + 1
+                if i > #text then break end
+               
+        local c = text:sub(i, i)
+ 
+                if c == "\\" then
+            if text:sub(i+1, i+1) == "&" then
+                write("&")
+                i = i + 1
+            elseif text:sub(i+1, i+1) == "$" then
+                write("$")
+                i = i + 1
+                        else
+                                write(c)
+            end
+        elseif c == "#" then
+            st(cCode(text:sub(i+1, i+1)))
+            i = i + 1
+        elseif c == "$" then
+            sb(cCode(text:sub(i+1, i+1)))
+            i = i + 1
+        else
+            write(c)
+        end
+    end
+       
+        return
+end
+ 
+function cprint(text)
+        return cwrite(tostring(text).."\n")
+end
+
+function colorRead( _sReplaceChar, _tHistory )
+  term.setCursorBlink( true )
+
+    local sLine = ""
+  local nHistoryPos = nil
+  local nPos = 0
+    if _sReplaceChar then
+    _sReplaceChar = string.sub( _sReplaceChar, 1, 1 )
+  end
+  
+  local w, h = term.getSize()
+  local sx, sy = term.getCursorPos()  
+  
+  local function redraw( _sCustomReplaceChar )
+    local nScroll = 0
+    if sx + nPos >= w then
+      nScroll = (sx + nPos) - w
+    end
+      
+    term.setCursorPos( sx, sy )
+    local sReplace = _sCustomReplaceChar or _sReplaceChar
+    if sReplace then
+      cwrite( string.rep(sReplace, string.len(sLine) - nScroll) )
+    else
+      cwrite( string.sub( sLine, nScroll + 1 ) )
+    end
+    term.setCursorPos( sx + nPos - (#sLine-#trimColor(sLine)) - nScroll, sy )
+  end
+  
+  while true do
+    local sEvent, param = os.pullEvent()
+    if sEvent == "char" then
+      sLine = string.sub( sLine, 1, nPos ) .. param .. string.sub( sLine, nPos + 1 )
+      nPos = nPos + 1
+      redraw()
+      
+    elseif sEvent == "key" then
+        if param == keys.enter then
+        -- Enter
+        break
+        
+      elseif param == keys.left then
+        -- Left
+        if nPos > #sLine-#trimColor(sLine) then
+          nPos = nPos - 1
+          redraw()
+        end
+        
+      elseif param == keys.right then
+        -- Right        
+        if nPos < #sLine then
+          nPos = nPos + 1
+          redraw()
+        end
+      
+      elseif param == keys.up or param == keys.down then
+                -- Up or down
+        if _tHistory then
+          redraw(" ");
+          if param == keys.up then
+            -- Up
+            if nHistoryPos == nil then
+              if #_tHistory > 0 then
+                nHistoryPos = #_tHistory
+              end
+            elseif nHistoryPos > 1 then
+              nHistoryPos = nHistoryPos - 1
+            end
+          else
+            -- Down
+            if nHistoryPos == #_tHistory then
+              nHistoryPos = nil
+            elseif nHistoryPos ~= nil then
+              nHistoryPos = nHistoryPos + 1
+            end           
+          end
+          
+          if nHistoryPos then
+                      sLine = _tHistory[nHistoryPos]
+                      nPos = string.len( sLine ) 
+                    else
+            sLine = ""
+            nPos = 0
+          end
+          redraw()
+                end
+      elseif param == keys.backspace then
+        -- Backspace
+        if nPos > 0 then
+          redraw(" ");
+          sLine = string.sub( sLine, 1, nPos - 1 ) .. string.sub( sLine, nPos + 1 )
+          nPos = nPos - 1         
+          redraw()
+        end
+      elseif param == keys.home then
+        -- Home
+        nPos = 0
+        redraw()    
+      elseif param == keys.delete then
+        if nPos < string.len(sLine) then
+          redraw(" ");
+          sLine = string.sub( sLine, 1, nPos ) .. string.sub( sLine, nPos + 2 )       
+          redraw()
+        end
+      elseif param == keys["end"] then
+        -- End
+        nPos = string.len(sLine)
+        redraw()
+      end
+    end
+  end
+  
+  term.setCursorBlink( false )
+  term.setCursorPos( w + 1, sy )
+  print()
+  
+  return sLine
+end
+
+local postLink,getLink
+postLink="http://http-chat-serv.appspot.com/post"
+getLink="http://http-chat-serv.appspot.com/get"
+updateLink = "https://raw.github.com/MudkipTheEpic/chatHTTP/master/Client"
+currentProgram = shell.getRunningProgram()
+name = ...
+screenX, screenY = term.getSize()
+screenY = screenY-2
+version = "3.0"
+data = {}
+if not fs.exists("/.chatData") then
+	fs.makeDir("/.chatData")
+end
+if fs.exists("/.chatData/data") then
+	file = fs.open("/.chatData/data", "r")
+	data.file = file.readAll()
+	password = data.file
+	file.close()
+else
+	password = "guest"
+end
+local function centerWrite(text, ny)
+	if type(text) == "table" then for _, v in pairs(text) do centerPrint(v) end
+	else
+		local x, y = term.getCursorPos()
+		local w, h = term.getSize()
+		term.setCursorPos(w/2 - text:len()/2 + (#text % 2 == 0 and 1 or 0), ny or y)
+		cwrite(text)
+	end
+end
+
+function updateDisplay(txt)
+    term.setCursorPos(1, screenY)	  
+	term.clearLine()
+	centerWrite(txt)
+end
+
+local post=function(txt,txt2) txt=txt2 or txt return http.get(postLink,{usr = name, data = txt, chan = channel}) end
+local cmdpost=function(txt,txt2) txt=txt2 or txt return http.get(postLink,{usr = name, cmd=txt, pass=password}) end
+
+local commandTable={
+	update=function() return update() end;
+	version=function()       
+		return updateDisplay("Version: "..version)
+	end;
+	exit=function(...) local l if #{...}>0 then l=" ["..table.concat({...}," ").."]" else l="" end post(name.."#0$f left the room."..l) return error(nil,3) end;
+	me=function(...)
+		local str=table.concat({...}," ")
+		return post("*"..name.."#0$f "..str)
+	end;
+	nick=function(newNick)
+		if not newNick or newNick=="" then updateDisplay("Please supply a nickname.") return nil end
+		post(name.."#0$f has changed nick to "..newNick)
+		name=newNick
+		return newNick
+	end;
+  ping=function()
+    updateDisplay(split(cmdpost("ping").readAll(), "\n")[2])
+  end;
+	server=function(...)
+		local args = {...}
+		sendstr = table.concat(args, " ")
+    return updateDisplay(split(cmdpost(sendstr).readAll(), "\n")[2])
+	end;
+  swapServ=function(...)
+  local args = {...}
+  local sendstr = "mvserv "..table.concat(args, " ")
+  return updateDisplay(split(cmdpost(sendstr).readAll(), "\n")[2])
+  end;
+  swapChannel=function(channel)
+  sendstr = "chanc "..channel
+  return updateDisplay(split(cmdpost(sendstr).readAll(), "\n")[2])
+  end;
+}
+
+ServCmdTbl = {
+	mvserv = function(NewServ)
+  post(name.."#0$f has left this server")
+	postLink="http://"..NewServ[3]
+	getLink="http://"..NewServ[4]
+	post(name.."#0$f has joined this server")
+	end;
+  cc = function(ChannelData)
+  post(name.."#0$f has left this channel")
+  channel = ChannelData[3]
+  post(name.."#0$f has joined this channel")
+  end;
+}
+
+function ProcServCmd(str)
+	local data2 = split(str, "\n")
+	str2 = data2[#data2]
+	if str2:sub(1,10) == "servercmd;" then
+		local strT = split(str2, ";")
+		for k,v in pairs(ServCmdTbl) do
+			if "servercmd;"..k == strT[1]..";"..strT[2] then
+				cmd = strT[2]
+				ServCmdTbl[cmd](strT)
+				return false
+			end
+		end
+		return true
+	end
+	return true
+end
+
+function processCommand(str)
+	if str:sub(1,1)=="/" then
+		local strT=split(str," ")
+		for k,v in pairs(commandTable) do
+			if "/"..k==strT[1] then
+				return commandTable[strT[1]:sub(2)]
+			end
+		end
+		return 4
+	end
+	return false
+end
+--cake
+function update()
+  updateContent = http.get(updateLink)
+  updateContent = updateContent.readAll()
+  file = fs.open(currentProgram, "r")
+  fileContent = file.readAll()
+  file.close()
+  if fileContent == updateContent then
+    term.setCursorPos(1, screenY)
+	write(currentProgram.." is up to date!")
+  else
+    term.setCursorPos(1, screenY)
+	write("New update available! Installing now...")
+	sleep(1)
+	file = fs.open(currentProgram, "w")
+	file.write(updateContent)
+	file.close()
+    term.setCursorPos(1, screenY)
+	term.clearLine()
+	write("Done! Restarting "..currentProgram.." now!")
+  isRestart=true
+  commandTable["exit"]("Updating client...")
+  end
+  
+end
+--test
+function play()
+  redstone.setOutput("back", true)
+  sleep(0.1)
+  redstone.setOutput("back", false)
+  sleep(0.3)
+  redstone.setOutput("back", true)
+  sleep(0.1)
+  redstone.setOutput("back",false)
+  sleep(0.05)
+  redstone.setOutput("back",true)
+  sleep(0.1)
+  redstone.setOutput("back",false)
+end
+
+function clearY(fromY, toY)
+  repeat
+  	term.setBackgroundColor(colors.black)
+  	term.setTextColor(colors.white)
+    term.setCursorPos(1, fromY)
+	term.clearLine()
+    fromY = fromY+1
+  until fromY >= toY
+end
+
+function receive()
+  while true do
+    get = http.get(getLink, {usr= name, slines=10, chan = channel})
+	get = get.readAll()
+	get = string.gsub(get,"\\(.)","%1")
+	if get ~= getOld then
+		dop = ProcServCmd(get)
+		if dop == true then
+			xOld, yOld = term.getCursorPos()
+			clearY(1, screenY)
+			term.setCursorPos(1,1)
+			cprint(get)
+		end
+		getOld = get
+		term.setCursorPos(xOld, yOld)
+		play()
+    term.setBackgroundColor(colors.black)
+    term.setTextColor(colors.white)
+	end
+	sleep(2)
+  end
+end
+
+function send()
+  while true do
+    term.setCursorPos(1, screenY+1)
+	 cwrite(name..": ")
+    term.setBackgroundColor(colors.black)
+    term.setTextColor(colors.white)
+    input = colorRead(nil,history)
+    table.insert(history,input)
+	 l=processCommand(input)
+   if l==4 then updateDisplay("Unknown command.")
+	 elseif l then l(select(2,unpack(split(input," "))))
+	 else
+	   post(name.."#0$f: "..input)  
+	 end
+	
+	 clearY(screenY+1, screenY+2)
+  end
+end
+
+
+term.clear()
+term.setCursorPos(1, screenY+1)
+if not name then
+write("Please enter a name: ")
+nameInput = colorRead()
+if nameInput == "" or nameInput == nil then
+  name = "User"..tostring(math.random(1, 999)
 )else
+  name = nameInput
+end
+end
+
+post(name.."#0$f joined the room!")  
+clearY(screenY+1, screenY+3)
+
+write("/exit to exit, /update to update.")
+get = http.get(getLink, {usr = name, slines=10, chan = channel})
+get = get.readAll()
+get = getOld
+local ok,err=pcall(parallel.waitForAny,send, receive)
+print(err)
+if isRestart then return shell.run(currentProgram,name) 
+elseif err=="Terminated" then post(name.."#0$f has left the room. [Terminated]")
+end
   name = nameInput
 end
 end
