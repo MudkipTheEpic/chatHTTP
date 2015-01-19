@@ -247,8 +247,8 @@ function updateDisplay(txt)
 	centerWrite(txt)
 end
 
-local post=function(txt,txt2) txt=txt2 or txt return http.get(postLink,{usr = name, data = txt, chan = channel}) end
-local cmdpost=function(txt,txt2) txt=txt2 or txt return http.get(postLink,{usr = name, cmd=txt, pass=password}) end
+local post=function(txt,txt2) txt=txt2 or txt return http.get(postLink,{usr = trimColor(name), data = txt, chan = channel}) end
+local cmdpost=function(txt,txt2) txt=txt2 or txt return http.get(postLink,{usr = trimColor(name), cmd=txt, pass=password}) end
 
 local commandTable={
 	update=function() return update() end;
@@ -280,7 +280,7 @@ local commandTable={
   return updateDisplay(split(cmdpost(sendstr).readAll(), "\n")[2])
   end;
   swapChannel=function(channel)
-  sendstr = "chanc "..channel
+  local sendstr = "chanc "..channel
   return updateDisplay(split(cmdpost(sendstr).readAll(), "\n")[2])
   end;
 }
