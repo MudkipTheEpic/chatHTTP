@@ -3,8 +3,41 @@
 3.0 now on App Engine!
 ]]--
 --Credit Jesusthekiller for color formatting
+--Credit Mini for updating to latest cc
 
 local split = function(str, pat) local t = {} local fpat = "(.-)"..pat local last_end = 1 local s, e, cap = str:find(fpat, 1) if not s then return {str} end while s do if s ~= 1 or cap ~= "" then table.insert(t,cap) end last_end = e+1 s, e, cap = str:find(fpat, last_end) end if last_end <= #str then cap = str:sub(last_end) table.insert(t, cap) end return t end
+local function jsh(str)
+	local total = 0
+	local strn = string.len(str)
+	for i = 1, strn do
+		char = string.byte(string.sub(str, i,i))
+		total = total + (char * math.pow(31, strn-i))
+	end
+	return total
+end
+local tHex = {
+    [ colors.white ] = "0",
+    [ colors.orange ] = "1",
+    [ colors.magenta ] = "2",
+    [ colors.lightBlue ] = "3",
+    [ colors.yellow ] = "4",
+    [ colors.lime ] = "5",
+    [ colors.pink ] = "6",
+    [ colors.gray ] = "7",
+    [ colors.lightGray ] = "8",
+    [ colors.cyan ] = "9",
+    [ colors.purple ] = "a",
+    [ colors.blue ] = "b",
+    [ colors.brown ] = "c",
+    [ colors.green ] = "d",
+    [ colors.red ] = "e",
+    [ colors.black ] = "f",
+}
+
+local fHex = {}
+for k,v in pairs(tHex) do
+  fHex[v] = k
+end
 
 isRestart=false
 local channel = "main"
@@ -17,7 +50,7 @@ end
 
 local history={}
 
-local update,colorRead,play,clear,receive,send,processCommand,post,updateDisplay
+local update,colorRead,play,clear,receive,send,processCommand,post,updateDisplay,getOld
 local cprint,cwrite,toCode,cCode,clear,sb,st,sc
 function sc(x, y)
     term.setCursorPos(x, y)
@@ -39,7 +72,7 @@ end
  
 function cCode(h)
         if term.isColor() and term.isColor then
-                return 2 ^ (tonumber(h, 16) or 0)
+                return (fHex[h] or 0)
         else
                 if h == "f" then
                         return colors.black
@@ -206,7 +239,6 @@ function colorRead( _sReplaceChar, _tHistory )
   term.setCursorBlink( false )
   term.setCursorPos( w + 1, sy )
   print()
-  
   return sLine
 end
 
@@ -242,12 +274,12 @@ local function centerWrite(text, ny)
 end
 
 function updateDisplay(txt)
-    term.setCursorPos(1, screenY)	  
+  term.setCursorPos(1, screenY)	  
 	term.clearLine()
 	centerWrite(txt)
 end
 
-local post=function(txt,txt2) txt=txt2 or txt return http.get(postLink,{usr = trimColor(name), data = txt, chan = channel}) end
+local post=function(txt,txt2) txt=txt2 or txt return http.get(postLink,{usr = trimColor(name), data = txt, chan = channel, pass=password}) end
 local cmdpost=function(txt,txt2) txt=txt2 or txt return http.get(postLink,{usr = trimColor(name), cmd=txt, pass=password}) end
 
 local commandTable={
@@ -275,13 +307,19 @@ local commandTable={
     return updateDisplay(split(cmdpost(sendstr).readAll(), "\n")[2])
 	end;
   swapServ=function(...)
-  local args = {...}
-  local sendstr = "mvserv "..table.concat(args, " ")
-  return updateDisplay(split(cmdpost(sendstr).readAll(), "\n")[2])
+    local args = {...}
+    local sendstr = "mvserv "..table.concat(args, " ")
+    return updateDisplay(split(cmdpost(sendstr).readAll(), "\n")[2])
   end;
   swapChannel=function(channel)
-  local sendstr = "chanc "..channel
-  return updateDisplay(split(cmdpost(sendstr).readAll(), "\n")[2])
+    local sendstr = "chanc "..channel
+    return updateDisplay(split(cmdpost(sendstr).readAll(), "\n")[2])
+  end;
+  setPass=function(pass)
+    password=pass
+    local fh = fs.open(".chatData/data", "w")
+    fh.write(jsh(pass))
+    fh.close()
   end;
 }
 
@@ -380,24 +418,24 @@ end
 
 function receive()
   while true do
-    get = http.get(getLink, {usr= name, slines=10, chan = channel})
-	get = get.readAll()
-	get = string.gsub(get,"\\(.)","%1")
-	if get ~= getOld then
-		dop = ProcServCmd(get)
-		if dop == true then
-			xOld, yOld = term.getCursorPos()
-			clearY(1, screenY)
-			term.setCursorPos(1,1)
-			cprint(get)
-		end
-		getOld = get
-		term.setCursorPos(xOld, yOld)
-		play()
-    term.setBackgroundColor(colors.black)
-    term.setTextColor(colors.white)
-	end
-	sleep(2)
+    get = http.get(getLink, {usr= name, slines=10, chan = channel, pass=password})
+    get = get.readAll()
+    get = string.gsub(get,"\\(.)","%1")
+    if get ~= getOld then
+		  dop = ProcServCmd(get)
+		  if dop == true then
+        xOld, yOld = term.getCursorPos()
+        clearY(1, screenY)
+        term.setCursorPos(1,1)
+        cprint(get)
+		  end
+		  getOld = get
+		  term.setCursorPos(xOld, yOld)
+		  play()
+      term.setBackgroundColor(colors.black)
+      term.setTextColor(colors.white)
+    end
+    sleep(1.25)
   end
 end
 
@@ -413,7 +451,9 @@ function send()
    if l==4 then updateDisplay("Unknown command.")
 	 elseif l then l(select(2,unpack(split(input," "))))
 	 else
-	   post(name.."#0$f: "..input)  
+    if input ~= "" then
+	    post(name..":#0$f "..input)  
+    end
 	 end
 	
 	 clearY(screenY+1, screenY+2)
@@ -441,7 +481,6 @@ get = http.get(getLink, {usr = name, slines=10, chan = channel})
 get = get.readAll()
 get = getOld
 local ok,err=pcall(parallel.waitForAny,send, receive)
-print(err)
 if isRestart then return shell.run(currentProgram,name) 
 elseif err=="Terminated" then post(name.."#0$f has left the room. [Terminated]")
 end
