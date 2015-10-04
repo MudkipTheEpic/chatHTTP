@@ -456,7 +456,7 @@ function send()
 	 elseif l then l(select(2,unpack(split(input," "))))
 	 else
     if input ~= "" then
-	    post(name..":#0$f "..input)  
+	    post(name.."#0$f: "..input)  
     end
 	 end
 	
